@@ -1,4 +1,4 @@
-package com.billrecognition;
+package com.br2a;
 
 import com.facebook.react.ReactActivity;
 
@@ -10,6 +10,6 @@ public class MainActivity extends ReactActivity {
      */
     @Override
     protected String getMainComponentName() {
-        return "billRecognition";
+        return "br2a";
     }
 }

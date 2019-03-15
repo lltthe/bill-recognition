@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="com.billrecognition">
+  package="com.br2a">
 
     <uses-permission android:name="android.permission.INTERNET" />
 	  <uses-permission android:name="android.permission.CAMERA"/>
@@ -25,6 +25,10 @@
         </intent-filter>
       </activity>
       <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" />
+	  <meta-data
+		android:name="com.google.firebase.ml.vision.DEPENDENCIES"
+		android:value="ocr" />
+	<!-- To use multiple models, list all needed models: android:value="ocr, face, barcode" -->
     </application>
 
 </manifest>
