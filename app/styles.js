@@ -8,7 +8,8 @@ export const cardWidth = screenWidth - 20
 const styles = StyleSheet.create({
   screen: {
     flex: 1,
-    alignItems: 'center'
+    alignItems: 'center',
+    flexDirection: 'column'
   },
   actionButtonIcon: {
     fontSize: 24,
