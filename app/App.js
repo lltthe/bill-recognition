@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import {
-  View, Alert, ImageEditor, ScrollView, ActivityIndicator, Text, Button
+  View, Alert, ImageEditor, ScrollView, ActivityIndicator, Text
 } from 'react-native'
 
 import IconMaterial from 'react-native-vector-icons/MaterialIcons'
