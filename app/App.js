@@ -17,7 +17,7 @@ const imagePickerOptions = {
   title: null
 }
 
-// console.disableYellowBox = true
+console.disableYellowBox = true
 
 const SERVER_KEY = 'server'
 
@@ -31,6 +31,7 @@ export default class App extends Component {
       originalImage: null,
       preprocessedImage: null,
       lineImages: null,
+      rawLineImages: null,
       server: '',
       showServerAddressInput: false,
       preprocessing: false
@@ -88,28 +89,48 @@ export default class App extends Component {
                     source={image}
                     roundedImage={false}
                     onPress={() => {
-                      var lines = this.state.lineImages
+                      var lines = this.state.lineImages, rawLines = this.state.rawLineImages
                       lines[index].text = 'Recognizing... Please Wait...'
                       this.setState({ lineImages: lines })
+
+                      var pivot = rawLines[index].uri
 
                       RNFetchBlob.config({ trusty: true })
                         .fetch('POST', serverHeader + this.state.server + '/api/tesseract', {
                           'Content-Type': 'multipart/form-data'
                         }, [
-                            { name: 'image', filename: 'image.jpg', type: 'image/foo', data: RNFetchBlob.wrap(image.uri) }
+                            { name: 'image', filename: 'image.jpg', type: 'image/foo', data: RNFetchBlob.wrap(pivot) }
                           ]).then((resp) => {
                             var result = JSON.parse(resp.data)
-                            result = JSON.stringify(result)
+                            result = result.data
+
+                            if (!result || result == '') {
+                              result = 'No result (e.g. due to not enough DPI)'
+                            }
 
                             var lines = this.state.lineImages
-                            lines[index].text = result
-                            this.setState({ lineImages: lines })
+                            lines[index].text = 'Tesseract: ' + result
 
-                          }).catch((err) => {
-                            var lines = this.state.lineImages
-                            lines[index].text = image.uri + '\nFailed to reach OCR API'
-                            this.setState({ lineImages: lines })
-                          })
+                            RNFetchBlob.config({ trusty: true })
+                              .fetch('POST', serverHeader + this.state.server + '/api/crnn', {
+                                'Content-Type': 'multipart/form-data'
+                              }, [
+                                  { name: 'image', filename: 'image.jpg', type: 'image/foo', data: RNFetchBlob.wrap(image.uri) }
+                                ]).then((resp2) => {
+                                  var result2 = JSON.parse(resp2.data)
+                                  result2 = result2.data
+
+                                  if (!result2 || result2 == '') {
+                                    result2 = 'No result (e.g. due to not enough DPI)'
+                                  }
+
+                                  var lines = this.state.lineImages
+                                  lines[index].text += '\nCRNN: ' + result2
+                                  this.setState({ lineImages: lines })
+
+                                }).catch((err) => { })
+
+                          }).catch((err) => { })
                     }} />
                 }
               </View>
@@ -188,7 +209,7 @@ export default class App extends Component {
 
                 this.setState({ preprocessedImage: { uri: resultImageLink, width: originalImage.width, height: originalImage.height } })
 
-                var n = result.lowers_len, lowers = result.lowers, uppers = result.uppers, lines = []
+                var n = result.lowers_len, lowers = result.lowers, uppers = result.uppers, lines = [], rawLines = []
                 for (i = 0; i < n; ++i) {
                   var lineSize = { width: originalImage.width, height: lowers[i] - uppers[i] + 1 }
                   var displaySize = { width: cardWidth, height: (lineSize.height / lineSize.width) * cardWidth + 1 }
@@ -204,7 +225,20 @@ export default class App extends Component {
                       this.setState({ lineImages: lines })
                     },
                     (error) => { })
+
+                  ImageEditor.cropImage(resultProprocessedImageUri, {
+                    offset: { x: 0, y: uppers[i] },
+                    size: lineSize
+                  },
+                    (uri) => {
+                      rawLines.push({ uri: uri })
+                      this.setState({ rawLineImages: rawLines })
+                    },
+                    (error) => { })
                 }
+
+                this.setState({ preprocessing: false })
+
                 showMessage({
                   message: 'Usage Hint',
                   description: 'Tap an image to recognize texts in that line',
@@ -212,10 +246,7 @@ export default class App extends Component {
                   duration: 2000
                 })
               })
-
-            this.setState({ preprocessing: false })
           })
     }
   }
-
 }
